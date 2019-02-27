@@ -19,6 +19,10 @@ def update_albums(transaction):
                 'key', 'textcolumn',),
             values=[
                 (i, fake.name()),])
-    transaction.commit()
 
 database.run_in_transaction(update_albums)
+
+with database.snapshot() as snapshot:
+    results = snapshot.execute_sql('SELECT key,textcolumn from table_python')
+    for row in results:
+        print(row)
