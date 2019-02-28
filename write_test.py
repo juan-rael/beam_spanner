@@ -112,27 +112,26 @@ class SpannerWriteFn(beam.DoFn):
     self.values = []
 
   def _insert(self):
-    self.transaction.insert(
-          table=self.beam_options['table_id'],
-          columns=self.beam_options['columns'],
-          values=self.values)
-    self.transaction.commit()
-    self.written_row.inc(len(self.values))
+    if len(self.values) > 0:
+      self.transaction.insert(
+            table=self.beam_options['table_id'],
+            columns=self.beam_options['columns'],
+            values=self.values)
+      self.transaction.commit()
+      self.written_row.inc(len(self.values))
+    self.values = []
 
   def process(self, element):
     if len(self.values) >= self.beam_options['max_num_mutations']:
-      
       self._insert()
       self.transaction = self.session.transaction()
       self.transaction.begin()
-      self.values = []
-    else:
-      self.values.append(element)
+
+    self.values.append(element)
       
 
   def finish_bundle(self):
-    if len(self.values) > 0:
-      self._insert()      
+    self._insert()
     self.transaction = None
     self.values = []
 
