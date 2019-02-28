@@ -65,7 +65,9 @@ class CreateAll():
 
 class SpannerWriteFn(beam.DoFn):
   def __init__(self, project_id, instance_id,
-               database_id, table_id, columns):
+               database_id, table_id, columns,
+               max_num_mutations=10000,
+               batch_size_bytes=0):
     from google.cloud.spanner import Client
     from apache_beam.metrics import Metrics
 
@@ -74,7 +76,9 @@ class SpannerWriteFn(beam.DoFn):
                          'instance_id': instance_id,
                          'database_id': database_id,
                          'table_id': table_id,
-                         'columns': columns}
+                         'columns': columns,
+                         'max_num_mutations': max_num_mutations,
+                         'batch_size_bytes': batch_size_bytes}
     client = Client(project=self.beam_options['project_id'])
     instance = client.instance(self.beam_options['instance_id'])
     database = instance.database(self.beam_options['database_id'])
@@ -82,7 +86,7 @@ class SpannerWriteFn(beam.DoFn):
     self.session = Session(database)
     self.session.create()
 
-    self.written_row = Metrics.counter(SpannerWriteFn, 'Written Row')
+    self.written_row = Metrics.counter(self.__class__, 'Written Row')
 
   def __getstate__(self):
     return self.beam_options
@@ -100,24 +104,37 @@ class SpannerWriteFn(beam.DoFn):
     self.session = Session(database)
     self.session.create()
 
-    self.written_row = Metrics.counter(SpannerWriteFn, 'Written Row')
+    self.written_row = Metrics.counter(self.__class__, 'Written Row')
 
   def start_bundle(self):
     self.transaction = self.session.transaction()
     self.transaction.begin()
     self.values = []
 
+  def _insert(self):
+    self.transaction.insert(
+          table=self.beam_options['table_id'],
+          columns=self.beam_options['columns'],
+          values=self.values)
+    self.transaction.commit()
+    self.written_row.inc(len(self.values))
+
   def process(self, element):
-    self.values.append(element)
+    if len(self.values) >= self.beam_options['max_num_mutations']:
+      
+      self._insert()
+      self.transaction = self.session.transaction()
+      self.transaction.begin()
+      self.values = []
+    else:
+      self.values.append(element)
       
 
   def finish_bundle(self):
-    self.transaction.insert(
-        table=self.beam_options['table_id'],
-        columns=self.beam_options['columns'],
-        values=self.values)
-    self.transaction.commit()
+    if len(self.values) > 0:
+      self._insert()      
     self.transaction = None
+    self.values = []
 
   def display_data(self):
     return {
@@ -150,7 +167,7 @@ def run(argv=[]):
     '--region=us-central1',
     '--runner=dataflow',
     '--autoscaling_algorithm=NONE',
-    '--num_workers=10',
+    '--num_workers=5',
     '--staging_location=gs://juantest/stage',
     '--temp_location=gs://juantest/temp',
   ])
