@@ -174,7 +174,7 @@ def run(argv=[]):
     '--region=us-central1',
     '--runner=dataflow',
     '--autoscaling_algorithm=NONE',
-    '--num_workers=70',
+    '--num_workers=100',
     '--staging_location=gs://juantest/stage',
     '--temp_location=gs://juantest/temp',
   ])
@@ -189,7 +189,7 @@ def run(argv=[]):
   print('JobID:', jobname)
   create_table.create_table()
 
-  row_count = 100000000
+  row_count = 1000000000
   row_limit = 1000
   row_step = row_count if row_count <= row_limit else row_count/row_limit
   pipeline_options = PipelineOptions(argv)
