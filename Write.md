@@ -5,20 +5,31 @@
 mutations = []
 result = (p
 		  | beam.Create(mutations)
-          | SpannerIO.write(instance_id="instance",
-                            database_id="database"))
+          | SpannerIO.write(instance_id="instance_id",
+                            database_id="database_id"))
 ```
 ## Write Mutation Groups 
 ```python
 mutationGroups = []
 result = (p
 		  | beam.Create(mutationGroups)
-       	  | SpannerIO.write(instance_id="instance",
-           	                database_id="database",
+       	  | SpannerIO.write(instance_id="instance_id",
+           	                database_id="database_id",
                	            grouped=True))
 ```
+```python
+mutation = m(2L)
+service_factory = FakeServiceFactory()
+mutations = (p
+			 | beam.Create(mutation)
+			 | SpannerIO.write(project_id="project_id",
+			 	               instance_id="instance_id",
+			 	               database_id="database_id",
+			 	               service_factory=service_factory))
+```
 # Classes
-# SpannerIO
+
+## SpannerIO
 ### write
 ```python
 	return AutoValue_SpannerIO_Write
@@ -43,8 +54,6 @@ result = (p
 ### withServiceFactory (call setServiceFactory)
 ### connectToSpanner
 > To create this in python, we need to set keyword arguments, because, we can't Pickle the classes.
-
-
 ## Write (PTransform)
 ### getSpannerConfig
 ### getBatchSizeBytes
@@ -64,23 +73,23 @@ result = (p
 ### withSchemaReadySignal
 ### withGroupingFactor
 ### expand
-	```python
+```python
 	(p
 	 | "To mutation group" >> beam.ParDo(ToMutationGroupFn())
 	 | "Write mutations to Cloud Spanner" >> WriteGrouped())
-	 ```
+```
 ### DisplayData
-	```python
+```python
 	getSpannerConfig().DisplayData
 	DisplayDataItem( "batchSizeBytes", getBatchSizeBytes(), "Batch Size in Bytes")
-	```
-
+```
 
 ## ToMutationGroupFn (DoFn)
 ### processElement(element)
 ```python
 return MutationGroup.create(element)
 ```
+
 ## WriteGrouped (PTransform)
 ### spec
 ### BATCHABLE_MUTATIONS_TAG
@@ -124,6 +133,7 @@ return MutationGroup.create(element)
                                   result.get(FAILED_MUTATIONS_TAG),
                                   FAILED_MUTATIONS_TAG)
 ```
+
 ## BatchFn (DoFn)
 ### maxBatchSizeBytes
 ### maxNumMutations
@@ -155,7 +165,6 @@ return MutationGroup.create(element)
 ### unbatcheableMutationsTag
 ### batchSizeBytes
 ### maxNumMutations
-
 ### processElement(element, schemaView)
 ```python
 		mg = element
@@ -179,14 +188,12 @@ return MutationGroup.create(element)
 ### batchCells
 ### schemaVIew
 ### mutationsToSort
-
 ### __init__(maxBatchSizeBytes, maxNumMutations, groupingFactor, schemaView)
 ```python
 		maxBatchSizeBytes = maxBatchSizeBytes * groupingFactor
 		maxNumMutations = maxNumMutations * groupingFactor
 		schemaView = schemaView
 ```
-
 ### startBundle
 ```python
 		if mutationsToSort == None:
@@ -194,7 +201,6 @@ return MutationGroup.create(element)
 		else:
 			raise IllegalStateexception("Sorter should be null here")
 ```
-
 ### initSorter
 ```python
 		mutationsToSort = []
@@ -231,14 +237,12 @@ return MutationGroup.create(element)
 			batchCells += groupCells
 ```
 
-
 ## WriteToSpannerFn (DoFn)
 ### spannerAccessor
 ### spannerConfig
 ### failureMode
 ### failedTag
-
-### processElement(element, )
+### processElement(element)
 ```python
 		mutations = element
 		tryIndividual = False
