@@ -40,8 +40,8 @@ result = (p
 ### withInstanceId (call setInstanceId)
 ### withDatabaseId (call setDatabaseId)
 ### withHost (call setHost)
-###withServiceFactory (call setServiceFactory)
-###connectToSpanner
+### withServiceFactory (call setServiceFactory)
+### connectToSpanner
 > To create this in python, we need to set keyword arguments, because, we can't Pickle the classes.
 
 
@@ -81,10 +81,6 @@ result = (p
 ```python
 return MutationGroup.create(element)
 ```
-
-
-
-
 ## WriteGrouped (PTransform)
 ### spec
 ### BATCHABLE_MUTATIONS_TAG
@@ -128,9 +124,6 @@ return MutationGroup.create(element)
                                   result.get(FAILED_MUTATIONS_TAG),
                                   FAILED_MUTATIONS_TAG)
 ```
-
-
-
 ## BatchFn (DoFn)
 ### maxBatchSizeBytes
 ### maxNumMutations
