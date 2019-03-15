@@ -1,11 +1,13 @@
-# Write SpannerIO.write
-mutations = []
+# Example
+## Write SpannerIO
+* write
+	mutations = []
 
-result = (p
-		  | beam.Create(mutations)
-          | SpannerIO.write(instance_id="instance",
-                            database_id="database"))
-# Write Mutation Groups
+	result = (p
+			  | beam.Create(mutations)
+	          | SpannerIO.write(instance_id="instance",
+	                            database_id="database"))
+## Write Mutation Groups 
 mutationGroups = []
 result = (p
 		  | beam.Create(mutationGroups)
@@ -21,7 +23,8 @@ class SpannerIO():
 		.setMaxNumMUtations(DEFAULT_MAX_NUM_MUTATIONS)
 		.setGroupingFactor(DEFAULT_GROUPING_FACTOR)
 		.setFailureMode(FailureMode.FAIL_FAST)
-
+# Classes
+## SpannerConfig
 SpannerConfig -> Class
 	* USER_AGENT_PREFIX
 	* DEFAULT_HOST
@@ -39,7 +42,7 @@ SpannerConfig -> Class
 	+ To create this in python, we need to set keyword arguments, because, we can't Pickle the classes.
 
 
-
+## Write (PTransform)
 Write -> PTransform
 	* getSpannerConfig
 	* getBatchSizeBytes
@@ -67,7 +70,7 @@ Write -> PTransform
 		DisplayDataItem( "batchSizeBytes", getBatchSizeBytes(), "Batch Size in Bytes")
 
 
-ToMutationGroupFn -> DoFn
+## ToMutationGroupFn -> DoFn
 	* processElement
 		value = c.element()
 		return MutationGroup.create(value)
@@ -75,7 +78,7 @@ ToMutationGroupFn -> DoFn
 
 
 
-WriteGrouped -> PTransform
+## WriteGrouped -> PTransform
 	* spec
 	* BATCHABLE_MUTATIONS_TAG
 	* UNBATCHABLE_MUTATIONS_TAG
@@ -121,7 +124,7 @@ WriteGrouped -> PTransform
 
 
 
-BatchFn
+## BatchFn
 	* maxBatchSizeBytes
 	* maxNumMutations
 	* schemaView
@@ -146,7 +149,7 @@ BatchFn
 			c.output(batch)
 
 
-BatchableMutationFilterFn
+## BatchableMutationFilterFn
 	* schemaView
 	* unbatcheableMutationsTag
 	* batchSizeBytes
@@ -166,7 +169,7 @@ BatchableMutationFilterFn
 		else:
 			c.output(mg)
 
-GatherBundleAndSortFn
+## GatherBundleAndSortFn
 	* maxBatchSizeBytes
 	* maxNumMutations
 	* batchSizeBytes
@@ -213,7 +216,7 @@ GatherBundleAndSortFn
 			batchCells += groupCells
 
 
-WriteToSpannerFn
+## WriteToSpannerFn
 	* spannerAccessor
 	* spannerConfig
 	* failureMode
@@ -243,5 +246,5 @@ WriteToSpannerFn
 					logging.warm("Failed to write the mutation group: " + mg, e)
 					c.output(failedTag, mg)
 
-SpannerWriteResult
+## SpannerWriteResult
 	
