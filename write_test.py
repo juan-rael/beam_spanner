@@ -122,6 +122,10 @@ class SpannerWriteFn(beam.DoFn):
                                     label='Spanner Database Id'),
       'tableId': DisplayDataItem(self.beam_options['table_id'],
                                  label='Spanner Table Id'),
+      'max_num_mutations': DisplayDataItem(self.beam_options['max_num_mutations'],
+                                 label='Spanner Max Number of Mutations'),
+      'batch_size_bytes': DisplayDataItem(self.beam_options['batch_size_bytes'],
+                                 label='Spanner Batch Size Bytes'),
     }
 
 
@@ -146,13 +150,29 @@ class WriteToSpanner(beam.PTransform):
 
   def expand(self, pvalue):
     return (pvalue
-            | beam.ParDo(SpannerWriteFn(self.beam_options['project_id'],
-                                        self.beam_options['instance_id'],
-                                        self.beam_options['database_id'],
-                                        self.beam_options['table_id'],
-                                        self.beam_options['columns'],
-                                        self.beam_options['max_num_mutations'],
-                                        self.beam_options['batch_size_bytes'])))
+            | "Write" >> beam.ParDo(SpannerWriteFn(self.beam_options['project_id'],
+                                                   self.beam_options['instance_id'],
+                                                   self.beam_options['database_id'],
+                                                   self.beam_options['table_id'],
+                                                   self.beam_options['columns'],
+                                                   self.beam_options['max_num_mutations'],
+                                                   self.beam_options['batch_size_bytes'])))
+
+  def display_data(self):
+    return {
+      'projectId': DisplayDataItem(self.beam_options['project_id'],
+                                   label='Spanner Project Id'),
+      'instanceId': DisplayDataItem(self.beam_options['instance_id'],
+                                    label='Spanner Instance Id'),
+      'databaseId': DisplayDataItem(self.beam_options['database_id'],
+                                    label='Spanner Database Id'),
+      'tableId': DisplayDataItem(self.beam_options['table_id'],
+                                 label='Spanner Table Id'),
+      'max_num_mutations': DisplayDataItem(self.beam_options['max_num_mutations'],
+                                 label='Spanner Max Number of Mutations'),
+      'batch_size_bytes': DisplayDataItem(self.beam_options['batch_size_bytes'],
+                                 label='Spanner Batch Size Bytes'),
+    }
 
 
 def run(argv=[]):
@@ -174,7 +194,7 @@ def run(argv=[]):
     '--region=us-central1',
     '--runner=dataflow',
     '--autoscaling_algorithm=NONE',
-    '--num_workers=100',
+    '--num_workers=10',
     '--staging_location=gs://juantest/stage',
     '--temp_location=gs://juantest/temp',
   ])
@@ -189,7 +209,7 @@ def run(argv=[]):
   print('JobID:', jobname)
   create_table.create_table()
 
-  row_count = 1000000000
+  row_count = 10000
   row_limit = 1000
   row_step = row_count if row_count <= row_limit else row_count/row_limit
   pipeline_options = PipelineOptions(argv)

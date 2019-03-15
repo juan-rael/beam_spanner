@@ -1,4 +1,4 @@
-apache-beam[gcp]==2.9.0
+apache-beam[gcp]==2.10.0
 google-cloud-spanner==1.7.1
 google-cloud-core==0.29.1
 Faker==1.0.2
